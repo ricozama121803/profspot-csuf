@@ -15,7 +15,7 @@ export default function Home() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: "Hi! I'm the Rate My Professor support assistant. How can I help you today?",
+      content: "Hi! I'm the ProfSpot assistant for Cal State Fullerton. Ask me about CSUF professors, courses, or teaching styles!",
     },
   ]);
 
@@ -107,7 +107,7 @@ export default function Home() {
         >
           <img
             src="/logo-small.png" 
-            alt="ProfSpot Logo"
+            alt="ProfSpot CSUF Logo"
             style={{ width: '90px', height: '50px', marginRight: '-17px' }}
           />
           <Typography variant="h6" fontWeight="bold" color='#a3aab5'
@@ -116,7 +116,7 @@ export default function Home() {
               fontSize: "1.5rem",
             }}
           >
-            ProfSpot
+            ProfSpot CSUF
           </Typography>
         </Box>
 
@@ -183,7 +183,7 @@ export default function Home() {
                         bgcolor:
                           message.role === 'assistant'
                             ? 'rgba(0, 0, 0, 0.5)'
-                            : 'rgba(10, 130, 180, 0.7)',
+                            : 'rgba(255, 121, 0, 0.75)',
                         backdropFilter: 'blur(5px)',
                         color: 'white',
                         borderRadius: '16px',

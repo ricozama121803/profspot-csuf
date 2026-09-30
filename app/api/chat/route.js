@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { Pinecone, PineconeClient } from "@pinecone-database/pinecone";
+import { Pinecone } from "@pinecone-database/pinecone";
 import OpenAI from "openai";
 
 
-const systemPrompt = ` You are a "Rate My Professor" conversational AI agent designed to help university students find and evaluate professors based on their preferences and needs. Your knowledge base contains detailed reviews and ratings for professors across various subjects.
+const systemPrompt = ` You are ProfSpot CSUF, a conversational AI agent designed to help California State University, Fullerton (CSUF) students find and evaluate professors based on their preferences and needs. Your knowledge base contains reviews and ratings for CSUF professors across departments such as Computer Science, Business, Kinesiology, and more. Only recommend professors that appear in the retrieved results, and if nothing relevant is returned, say so instead of inventing professors.
 
 When a user asks you a question about finding a professor, your goal is to provide the top 3 most relevant professor recommendations based on the user's query. You should use the Retrieval Augmented Generation (RAG) technique to generate these recommendations.
 
@@ -20,14 +20,14 @@ export async function POST(req) {
     const pc = new Pinecone({
         apiKey: process.env.PINECONE_API_KEY,
     })
-    const index = pc.index('rag').namespace('ns2')
+    const index = pc.index(process.env.PINECONE_INDEX || 'profspot-csuf').namespace(process.env.PINECONE_NAMESPACE || 'csuf')
     const openai = new OpenAI()
 
     const text = data[data.length-1].content
     const embedding = await openai.embeddings.create({
         model: 'text-embedding-3-small',
         input: text,
-        encdoing_fromat: 'float',
+        encoding_format: 'float',
 
     })
 
@@ -43,7 +43,7 @@ export async function POST(req) {
     results.matches.forEach((match) => {
         resultString += `\n
         Professor: ${match.id}
-        Review: ${match.metadata.stars}
+        Review: ${match.metadata.review}
         Subject: ${match.metadata.subject}
        Stars ${match.metadata.stars}
     
@@ -54,7 +54,7 @@ export async function POST(req) {
 
     const lastMessage = data[data.length-1]
     const lastMessageContent = lastMessage.content + resultString
-    const lastDataWithoutLastMessage = data.slice(0, data.lenth-1)
+    const lastDataWithoutLastMessage = data.slice(0, data.length-1)
     const completion = await openai.chat.completions.create({
         messages: [
             {role: 'system', content: systemPrompt},

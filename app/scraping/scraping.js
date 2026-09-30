@@ -123,7 +123,7 @@ export async function scrapeRMP(rmpLink){
             }
         });
 
-        await page.goto(link);
+        await page.goto(rmpLink);
 
         // Scrape teacher info html and review html
         [teacherInfoHtml, reviewsHtml] = await page.evaluate(async () => {

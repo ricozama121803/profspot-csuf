@@ -19,8 +19,8 @@ export default function WelcomeScreen({ onFinish }) {
       minWidth: 200.00,
       scale: 1.00,
       scaleMobile: 1.00,
-      color: 0x315CCC,
-      color2: 0x7A5684,
+      color: 0xFF7900,
+      color2: 0x003767,
       size: 1.80,
       backgroundColor: 0x0,
       THREE // Pass the three.js instance
@@ -108,7 +108,7 @@ export default function WelcomeScreen({ onFinish }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.5, ease: 'easeOut' }}
           >
-            ProfSpot
+            ProfSpot CSUF
           </Typography>
           <Typography
             variant="subtitle1"
@@ -119,7 +119,7 @@ export default function WelcomeScreen({ onFinish }) {
               marginBottom: '20px', // Space between the text and the button
             }}
           >
-            OpenAI-Powered RAG Assistant to RateMyProfessor.com
+            AI professor search for Cal State Fullerton Titans
           </Typography>
           <Button
             variant="contained"
@@ -128,9 +128,9 @@ export default function WelcomeScreen({ onFinish }) {
             sx={{
               padding: '10px 20px',
               borderRadius: '8px',
-              backgroundColor: '#4b32e5', // Match the color with the theme
+              backgroundColor: '#FF7900', // Match the color with the theme
               '&:hover': {
-                backgroundColor: '#3b29c5', // Slightly darker shade on hover
+                backgroundColor: '#D96500', // Slightly darker shade on hover
               },
               fontSize: '16px',
               fontWeight: 'bold',

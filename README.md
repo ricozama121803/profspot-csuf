@@ -1,37 +1,31 @@
-# ProfSpot 
+# ProfSpot CSUF
 
-**ProfSpot** is a RateMyProfessor chatbot powered by Retrieval-Augmented Generation (RAG) technology. It allows students to interactively search for professor ratings and reviews by leveraging advanced AI techniques and a scalable vector database.
+**ProfSpot CSUF** is a chatbot for Cal State Fullerton students that uses Retrieval-Augmented Generation (RAG) to find and summarize professor reviews. It is a CSUF-focused version of [HEADSTARTERTEAM-AiRateMyProfessor](https://github.com/ricozama121803/HEADSTARTERTEAM-AiRateMyProfessor).
 
 ## Features
 
-- **Professor Search**: Easily find and review professors.
-- **AI-Powered Insights**: Get intelligent, context-aware suggestions and summaries based on the latest ratings.
+- **Professor search**: ask in plain English ("easy CPSC 120 professor with good labs").
+- **AI-powered insights**: top-3 recommendations summarized from reviews retrieved from a vector database.
 
-## Tech Stack
+## Tech stack
 
-ProfSpot is built using the following technologies:
+Next.js, React, Material-UI, OpenAI (`text-embedding-3-small`, `gpt-4o-mini`), Pinecone, Jupyter (data loading).
 
-![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white)
-![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)
-![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
-![Material-UI](https://img.shields.io/badge/Material--UI-0081CB?style=for-the-badge&logo=mui&logoColor=white)
-![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white)
-![Pinecone](https://img.shields.io/badge/Pinecone-40C8FF?style=for-the-badge&logo=pinecone&logoColor=black)
-![Jupyter Notebook](https://img.shields.io/badge/Jupyter%20Notebook-F37626?style=for-the-badge&logo=jupyter&logoColor=white)
+## Setup
 
+1. `git clone https://github.com/ricozama121803/profspot-csuf.git && cd profspot-csuf`
+2. `npm install`
+3. Create `.env.local`:
+   ```
+   OPENAI_API_KEY=...
+   PINECONE_API_KEY=...
+   # optional, defaults shown
+   PINECONE_INDEX=profspot-csuf
+   PINECONE_NAMESPACE=csuf
+   ```
+4. Load data: `pip install -r requirements.txt`, then run `load.ipynb` to create the Pinecone index and upload `reviews.json`.
+5. `npm run dev` and open http://localhost:3000.
 
-## Installation
+## Data
 
-To get started with ProfSpot, follow these steps:
-
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/ricozama121803/HEADSTARTERTEAM-AiRateMyProfessor.git
-   cd HEADSTARTERTEAM-AiRateMyProfessor
-2. **Install dependencies**:
-   ```bash
-   npm install
-3. **Set up environment variables**: Create a .env.local file and add your OpenAI API keys and Pinecone credentials.
-4. **Run the development server**:
-   ```bash
-   npm run dev
+`reviews.json` currently holds **clearly labeled sample data** (fictional professors, prefixed `SAMPLE:`) so the app works out of the box. Replace it with real reviews in the same format (`professor`, `subject`, `stars`, `review`) before any real use. `app/scraping/scraping.js` is an optional Playwright scraper for RateMyProfessors pages; check the site's terms of service before using it.
