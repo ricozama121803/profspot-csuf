@@ -86,10 +86,7 @@ export default function Home() {
           height: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          backgroundImage: `url('/abstract3.jpg')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
+          background: 'linear-gradient(135deg, #002244 0%, #003767 50%, #0b5aa5 100%)', // CSUF blue
           overflow: 'hidden',
         }}
       >

@@ -22,7 +22,7 @@ export default function WelcomeScreen({ onFinish }) {
       color: 0xFF7900,
       color2: 0x003767,
       size: 1.80,
-      backgroundColor: 0x0,
+      backgroundColor: 0x003767, // CSUF blue
       THREE // Pass the three.js instance
     });
 
@@ -59,7 +59,7 @@ export default function WelcomeScreen({ onFinish }) {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: '#000',
+          backgroundColor: '#003767',
           color: '#fff',
           zIndex: 1000, // Ensure the welcome screen is on top
         }}
