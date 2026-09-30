@@ -1,12 +1,64 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Stack, Typography } from '@mui/material';
-import { ArrowUpward } from '@mui/icons-material'; 
+import { ArrowUpward, Star, LocalFireDepartment, ThumbUp, School, MenuBook, Notes } from '@mui/icons-material';
 import ReactMarkdown from 'react-markdown';
 import { motion } from 'framer-motion';
 import WelcomeScreen from './WelcomeScreen';
 import Logo from './Logo';
 
+
+
+// Turns "- **Overall Rating:** 4.4/5 (44 ratings)" list items into icon rows with color-coded values.
+const textOf = (node) =>
+  typeof node === 'string' || typeof node === 'number'
+    ? String(node)
+    : Array.isArray(node)
+      ? node.map(textOf).join('')
+      : node?.props?.children !== undefined
+        ? textOf(node.props.children)
+        : '';
+
+const GOOD = '#1e9e5a', OK = '#e0a000', BAD = '#d9452f';
+// higher is better unless `invert` (difficulty)
+const tone = (value, min, max, invert) => {
+  const r = (invert ? max - value : value - min) / (max - min);
+  return r >= 0.7 ? GOOD : r >= 0.5 ? OK : BAD;
+};
+
+const STATS = [
+  { re: /^overall( rating)?/i, label: 'Overall Rating', Icon: Star, color: (t) => tone(parseFloat(t), 1, 5) },
+  { re: /^difficulty/i, label: 'Difficulty', Icon: LocalFireDepartment, color: (t) => tone(parseFloat(t), 1, 5, true) },
+  { re: /^would take again/i, label: 'Would Take Again', Icon: ThumbUp, color: (t) => tone(parseFloat(t), 0, 100) },
+  { re: /^department/i, label: 'Department', Icon: School, color: () => 'var(--csuf-blue)' },
+  { re: /^courses?/i, label: 'Courses', Icon: MenuBook, color: () => 'var(--csuf-blue)' },
+  { re: /^summary/i, label: 'Summary', Icon: Notes, color: () => 'var(--csuf-blue)' },
+];
+
+function StatItem({ children, node, ...rest }) {
+  const match = textOf(children).trim().match(/^([A-Za-z ]+?)\s*:\s*([\s\S]*)$/);
+  const stat = match && STATS.find((s) => s.re.test(match[1].trim()));
+  if (!stat) return <li {...rest}>{children}</li>;
+  const { Icon, label } = stat;
+  const value = match[2].trim();
+  const color = stat.color(value);
+  const numeric = ['Overall Rating', 'Difficulty', 'Would Take Again'].includes(label);
+  return (
+    <li style={{ listStyle: 'none', margin: '6px 0 0 -1.25rem', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+      <span
+        className="clay-inset"
+        style={{ width: 30, height: 30, borderRadius: '50%', display: 'grid', placeItems: 'center', flexShrink: 0, color }}
+        title={label}
+      >
+        <Icon style={{ fontSize: 18 }} />
+      </span>
+      <span style={{ paddingTop: 4 }}>
+        <span style={{ color: 'var(--clay-ink-soft)', fontSize: '0.8rem', fontWeight: 700, marginRight: 6 }}>{label}</span>
+        <span style={numeric ? { fontWeight: 800, color } : undefined}>{value}</span>
+      </span>
+    </li>
+  );
+}
 
 export default function Home() {
   const [showWelcome, setShowWelcome] = useState(true);
@@ -167,7 +219,7 @@ export default function Home() {
                       }}
                     >
                       <div className="md">
-                        <ReactMarkdown>{m.content || '…'}</ReactMarkdown>
+                        <ReactMarkdown components={{ li: StatItem }}>{m.content || '…'}</ReactMarkdown>
                       </div>
                     </Box>
                   </Box>

@@ -121,3 +121,17 @@ body {
     transition: none;
   }
 }
+
+.md h3 {
+  margin-top: 14px;
+  font-size: 1.1rem;
+  color: var(--csuf-blue);
+}
+
+.md h3:first-child {
+  margin-top: 0;
+}
+
+.md ul + p {
+  margin-top: 12px;
+}
