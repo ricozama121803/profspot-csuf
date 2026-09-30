@@ -1,0 +1,124 @@
+{
+    "reviews": [
+      {
+        "professor": "Dr. Emily Johnson",
+        "subject": "Introduction to Computer Science",
+        "stars": 4,
+        "review": "Dr. Johnson is an excellent professor who really cares about her students. The lectures are engaging and she is always available for extra help."
+      },
+      {
+        "professor": "Professor William Lee",
+        "subject": "Organic Chemistry",
+        "stars": 3,
+        "review": "The material in this course is challenging, but Professor Lee does a good job of explaining the concepts. The exams are fair but the grading can be harsh."
+      },
+      {
+        "professor": "Dr. Sarah Martinez",
+        "subject": "World History",
+        "stars": 5,
+        "review": "Dr. Martinez is incredibly knowledgeable and passionate about the subject matter. Her lectures are interesting and she encourages class participation. I highly recommend this course."
+      },
+      {
+        "professor": "Professor David Thompson",
+        "subject": "Principles of Marketing",
+        "stars": 2,
+        "review": "I was really disappointed with this course. Professor Thompson seems disorganized and often does not respond to student emails in a timely manner. The workload is heavy and the grading is inconsistent."
+      },
+      {
+        "professor": "Dr. Isabella Gonzalez",
+        "subject": "Introduction to Psychology",
+        "stars": 4,
+        "review": "Dr. Gonzalez is a great professor who truly wants her students to succeed. The class is engaging and she is always willing to provide extra help or clarification."
+      },
+      {
+        "professor": "Professor Michael Chen",
+        "subject": "Calculus I",
+        "stars": 3,
+        "review": "Professor Chen is knowledgeable about the subject matter, but his teaching style can be difficult to follow at times. The exams are challenging and the grading is strict."
+      },
+      {
+        "professor": "Dr. Olivia Nguyen",
+        "subject": "Environmental Science",
+        "stars": 5,
+        "review": "Dr. Nguyen is an incredibly passionate and engaging professor. The course material is interesting and relevant, and she does an excellent job of connecting it to real-world issues."
+      },
+      {
+        "professor": "Professor Liam Dupont",
+        "subject": "Introduction to French",
+        "stars": 4,
+        "review": "Professor Dupont is very patient and supportive, which is helpful for a language course. The class is interactive and the workload is manageable."
+      },
+      {
+        "professor": "Dr. Sophia Patel",
+        "subject": "Principles of Microeconomics",
+        "stars": 3,
+        "review": "Dr. Patel is knowledgeable about the subject, but her lectures can be dry and difficult to follow at times. The exams are challenging, and the grading can be inconsistent."
+      },
+      {
+        "professor": "Professor Ethan Rodriguez",
+        "subject": "Introduction to Engineering",
+        "stars": 4,
+        "review": "Professor Rodriguez is enthusiastic and engaging. The course material is interesting and relevant, and he does a good job of balancing theory and practical applications."
+      },
+      {
+        "professor": "Dr. Emma Takahashi",
+        "subject": "Biochemistry",
+        "stars": 4,
+        "review": "Dr. Takahashi is a brilliant professor who is passionate about the subject. The course is challenging but rewarding, and she is always available to provide extra support and guidance."
+      },
+      {
+        "professor": "Professor Jacob Martinez",
+        "subject": "Introduction to Sociology",
+        "stars": 3,
+        "review": "Professor Martinez's lectures can be dry and difficult to stay engaged with. The workload is heavy, and the grading is strict. However, the course material is interesting and relevant."
+      },
+      {
+        "professor": "Dr. Isabella Gupta",
+        "subject": "Principles of Management",
+        "stars": 5,
+        "review": "Dr. Gupta is an exceptional professor who really cares about her students. The lectures are engaging, and she provides valuable real-world examples to illustrate the concepts. I highly recommend this course."
+      },
+      {
+        "professor": "Professor Liam Huang",
+        "subject": "Introduction to Physics",
+        "stars": 4,
+        "review": "Professor Huang is knowledgeable and passionate about the subject matter. The course is challenging but rewarding, and he is always willing to provide extra help and support."
+      },
+      {
+        "professor": "Dr. Olivia Reyes",
+        "subject": "Foundations of Art History",
+        "stars": 4,
+        "review": "Dr. Reyes is an engaging and knowledgeable professor. The course material is interesting and she does a great job of connecting it to real-world examples. The workload is reasonable, and the grading is fair."
+      },
+      {
+        "professor": "Professor Michael Duarte",
+        "subject": "Introduction to Data Structures",
+        "stars": 3,
+        "review": "Professor Duarte is knowledgeable about the subject matter, but his teaching style can be difficult to follow at times. The course is challenging, and the grading is strict."
+      },
+      {
+        "professor": "Dr. Sophia Nguyen",
+        "subject": "Principles of Marketing",
+        "stars": 4,
+        "review": "Dr. Nguyen is a passionate and engaging professor. The course material is relevant and interesting, and she does a great job of incorporating real-world examples. The workload is manageable, and the grading is fair."
+      },
+      {
+        "professor": "Professor Ethan Patel",
+        "subject": "Introduction to Political Science",
+        "stars": 3,
+        "review": "Professor Patel is knowledgeable about the subject matter, but his lectures can be dry and difficult to stay engaged with. The course workload is heavy, and the grading is strict."
+      },
+      {
+        "professor": "Dr. Emma Gonzalez",
+        "subject": "Foundations of Anthropology",
+        "stars": 5,
+        "review": "Dr. Gonzalez is an exceptional professor who truly cares about her students. The course material is fascinating, and she presents it in an engaging and thought-provoking way. I highly recommend this course."
+      },
+      {
+        "professor": "Professor Jacob Chen",
+        "subject": "Introduction to Statistics",
+        "stars": 4,
+        "review": "Professor Chen is knowledgeable and patient, which is helpful for a course like this. The lectures are clear and the assignments are reasonable. The grading is fair, and the professor is always available to provide extra support."
+      }
+    ]
+  }
