@@ -32,24 +32,27 @@ export async function POST(req) {
     })
 
     const results = await index.query({
-        topK: 3,
+        topK: 12,
         includeMetadata: true,
         vector: embedding.data[0].embedding
 
     })
 
-    let resultString = 
-    '\n\n Returned results from vector db (done automatically): '
+    // Group matched reviews by professor so each recommendation is a distinct person
+    const byProfessor = new Map()
     results.matches.forEach((match) => {
-        resultString += `\n
-        Professor: ${match.metadata.professor}
-        Review: ${match.metadata.review}
-        Subject: ${match.metadata.subject}
-       Stars ${match.metadata.stars}
-    
-    
-    \n\n
-    `
+        const { professor, subject, stars, review } = match.metadata
+        if (!byProfessor.has(professor)) byProfessor.set(professor, [])
+        byProfessor.get(professor).push({ subject, stars, review })
+    })
+
+    let resultString =
+    '\n\n Returned results from vector db (done automatically), grouped by professor: '
+    ;[...byProfessor.entries()].slice(0, 5).forEach(([professor, revs]) => {
+        resultString += `\n\nProfessor: ${professor}`
+        revs.slice(0, 3).forEach((r) => {
+            resultString += `\n- Subject: ${r.subject} | Stars: ${r.stars} | Review: ${r.review}`
+        })
     })
 
     const lastMessage = data[data.length-1]

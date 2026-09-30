@@ -23,9 +23,9 @@ Next.js, React, Material-UI, OpenAI (`text-embedding-3-small`, `gpt-4o-mini`), P
    PINECONE_INDEX=profspot-csuf
    PINECONE_NAMESPACE=csuf
    ```
-4. Load data: `pip install -r requirements.txt`, then run `load.ipynb` to create the Pinecone index and upload `reviews.json`.
+4. Load data: `node --env-file=.env.local scripts/load-pinecone.mjs` (creates the Pinecone index if needed and uploads `reviews.json`). `load.ipynb` does the same in Python.
 5. `npm run dev` and open http://localhost:3000.
 
 ## Data
 
-`reviews.json` holds CSUF reviews for the ~300 most-reviewed professors, pulled from RateMyProfessors (school ID 166) with `node scripts/scrape-csuf.mjs [maxProfessors] [reviewsPerProfessor]`. Re-run it to refresh the data, then re-run `load.ipynb`. Format: `professor`, `subject`, `stars`, `review`.
+`reviews.json` holds CSUF reviews for the ~300 most-reviewed professors, pulled from RateMyProfessors (school ID 166) with `node scripts/scrape-csuf.mjs [maxProfessors] [reviewsPerProfessor]`. Re-run it to refresh the data, then re-run the loader. Format: `professor`, `subject`, `stars`, `review`.
