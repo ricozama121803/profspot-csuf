@@ -1,97 +1,181 @@
 import { NextResponse } from "next/server";
 import { Pinecone } from "@pinecone-database/pinecone";
 import OpenAI from "openai";
+import departments from "../../departments.json";
 
+const systemPrompt = `You are ProfSpot CSUF, a conversational AI agent that helps California State University, Fullerton (CSUF) students find and evaluate professors. Your data comes from RateMyProfessors: each professor has overall stats (rating out of 5, difficulty out of 5, would-take-again percentage, number of ratings, courses, tags) plus student reviews.
 
-const systemPrompt = ` You are ProfSpot CSUF, a conversational AI agent designed to help California State University, Fullerton (CSUF) students find and evaluate professors based on their preferences and needs. Your knowledge base contains reviews and ratings for CSUF professors across departments such as Computer Science, Business, Kinesiology, and more. Only recommend professors that appear in the retrieved results, and if nothing relevant is returned, say so instead of inventing professors.
+Each user message is followed by "Retrieved data", which the system pulled automatically from the database for that message. Rules:
+- Only recommend or describe professors that appear in the retrieved data. Never invent professors, stats, or quotes. If nothing relevant was retrieved, say so and suggest how the student could rephrase (department, course code, or what they care about).
+- Recommend up to 3 professors unless the student asks for more, or asks about one specific professor. For each give: name, department, overall rating (/5), difficulty (/5), number of ratings, and a 1-2 sentence summary grounded in the reviews.
+- Be upfront when a professor has few ratings (under ~5) because the sample is small.
+- If the retrieved data is about a different department or course than the student asked about, say that rather than presenting it as a match.
+- Be friendly and concise. Use markdown.`;
 
-When a user asks you a question about finding a professor, your goal is to provide the top 3 most relevant professor recommendations based on the user's query. You should use the Retrieval Augmented Generation (RAG) technique to generate these recommendations.
+const PLAN_PROMPT = `You convert a CSUF student's chat message into a search plan for a professor-review database.
+Return JSON with exactly these keys:
+- "searchText": a standalone search query capturing what the student wants (resolve pronouns like "he"/"that class" using the conversation; include a professor's name if they are asking about one)
+- "departments": array of department names copied EXACTLY from the allowed list that clearly match the request (max 3, [] if unsure or not department-specific)
+- "courses": array of course codes mentioned, like "CPSC 131" ([] if none)
+- "sort": "rating" if they want the best/highest-rated, "easiest" if they want the easiest/lowest difficulty, "hardest" if they want the hardest, otherwise "relevance"
+- "minRating": a number 1-5 if they state a minimum rating, else null
 
-To do this, you will first use the user's query to retrieve the most relevant professor reviews from your knowledge base. You should consider factors like the professor's subject area, rating, and review sentiment when determining relevance. 
+Allowed departments: ${JSON.stringify(departments)}`;
 
-Once you have the top relevant reviews, you will then use them to generate concise summaries of the top 3 professor recommendations. Each recommendation should include the professor's name, subject area, overall rating (out of 5 stars), and a brief 1-2 sentence summary of the key points from the reviews.
+const normCourse = (c) => String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+const fmt = (n, d = 1) => (typeof n === "number" ? n.toFixed(d) : "n/a");
 
-Your responses should be helpful, informative, and tailored to the user's specific needs. You should aim to provide just the right amount of detail to allow the user to make an informed decision, without overwhelming them with unnecessary information.
+async function planQuery(openai, messages) {
+    const fallback = { searchText: messages[messages.length - 1].content, departments: [], courses: [], sort: "relevance", minRating: null };
+    try {
+        const res = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            response_format: { type: "json_object" },
+            temperature: 0,
+            messages: [{ role: "system", content: PLAN_PROMPT }, ...messages.slice(-6)],
+        });
+        const plan = JSON.parse(res.choices[0].message.content);
+        const valid = new Set(departments);
+        return {
+            searchText: String(plan.searchText || fallback.searchText),
+            departments: (plan.departments || []).filter((d) => valid.has(d)).slice(0, 3),
+            courses: (plan.courses || []).map(normCourse).filter(Boolean).slice(0, 5),
+            sort: ["rating", "easiest", "hardest"].includes(plan.sort) ? plan.sort : "relevance",
+            minRating: typeof plan.minRating === "number" ? plan.minRating : null,
+        };
+    } catch (err) {
+        console.error("planQuery failed, using raw message", err);
+        return fallback;
+    }
+}
 
-Remember to always be polite, friendly, and respectful in your interactions. If you are unsure about anything or need clarification, feel free to ask the user for more details. Your main priority is to assist the student in finding the best professors to fit their academic goals and preferences. `
+function filters(plan, { withScope = true } = {}) {
+    const profile = { type: { $eq: "professor" }, numRatings: { $gte: plan.sort === "relevance" ? 3 : 5 } };
+    const review = { type: { $eq: "review" } };
+    if (withScope && plan.courses.length) {
+        profile.courses = { $in: plan.courses };
+        review.course = { $in: plan.courses };
+    } else if (withScope && plan.departments.length) {
+        profile.department = { $in: plan.departments };
+        review.department = { $in: plan.departments };
+    }
+    if (plan.minRating) profile.avgRating = { $gte: plan.minRating };
+    return { profile, review };
+}
+
+async function retrieve(index, vector, plan) {
+    const query = (filter, topK) => index.query({ vector, topK, includeMetadata: true, filter });
+    const scoped = plan.courses.length || plan.departments.length;
+    let f = filters(plan);
+
+    // ranked lists ("best", "easiest"...): filter profiles, sort by stats, then fetch supporting reviews
+    if (plan.sort !== "relevance") {
+        let { matches } = await query(f.profile, 100);
+        if (!matches.length && scoped) ({ matches } = await query(filters(plan, { withScope: false }).profile, 100));
+        const by = {
+            rating: (a, b) => b.metadata.avgRating - a.metadata.avgRating || b.metadata.numRatings - a.metadata.numRatings,
+            easiest: (a, b) => a.metadata.avgDifficulty - b.metadata.avgDifficulty || b.metadata.numRatings - a.metadata.numRatings,
+            hardest: (a, b) => b.metadata.avgDifficulty - a.metadata.avgDifficulty || b.metadata.numRatings - a.metadata.numRatings,
+        }[plan.sort];
+        const top = matches.sort(by).slice(0, 5);
+        const { matches: revs } = top.length
+            ? await query({ type: { $eq: "review" }, professorId: { $in: top.map((m) => m.id) } }, 25)
+            : { matches: [] };
+        return { profiles: top, reviews: revs };
+    }
+
+    let [p, r] = await Promise.all([query(f.profile, 10), query(f.review, 40)]);
+    if (!p.matches.length && !r.matches.length && scoped) {
+        f = filters(plan, { withScope: false });
+        [p, r] = await Promise.all([query(f.profile, 10), query(f.review, 40)]);
+    }
+
+    // score professors by best-matching vector, with a small bonus for several matching reviews
+    const score = new Map();
+    const bump = (id, s, isReview) => {
+        const cur = score.get(id) || { best: 0, reviews: 0 };
+        cur.best = Math.max(cur.best, s);
+        if (isReview) cur.reviews += 1;
+        score.set(id, cur);
+    };
+    p.matches.forEach((m) => bump(m.id, m.score, false));
+    r.matches.forEach((m) => bump(m.metadata.professorId, m.score, true));
+    const rankedIds = [...score.entries()]
+        .map(([id, s]) => [id, s.best + 0.02 * Math.min(s.reviews, 5)])
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([id]) => id);
+
+    const known = new Map(p.matches.map((m) => [m.id, m]));
+    const missing = rankedIds.filter((id) => !known.has(id));
+    if (missing.length) {
+        const fetched = await index.fetch(missing);
+        Object.values(fetched.records || {}).forEach((rec) => known.set(rec.id, rec));
+    }
+    return { profiles: rankedIds.map((id) => known.get(id)).filter(Boolean), reviews: r.matches };
+}
+
+function buildContext(plan, { profiles, reviews }) {
+    if (!profiles.length) return "\n\nRetrieved data: no matching professors were found.";
+    const revsBy = new Map();
+    reviews.forEach((m) => {
+        const list = revsBy.get(m.metadata.professorId) || [];
+        list.push(m.metadata);
+        revsBy.set(m.metadata.professorId, list);
+    });
+    let out = `\n\nRetrieved data (search: "${plan.searchText}"${plan.departments.length ? `, departments: ${plan.departments.join("/")}` : ""}${plan.courses.length ? `, courses: ${plan.courses.join("/")}` : ""}):`;
+    profiles.forEach((pr) => {
+        const m = pr.metadata;
+        out += `\n\nProfessor: ${m.professor} | Department: ${m.department} | Overall: ${fmt(m.avgRating)}/5 from ${m.numRatings} ratings | Difficulty: ${fmt(m.avgDifficulty)}/5`;
+        if (typeof m.wouldTakeAgain === "number") out += ` | Would take again: ${m.wouldTakeAgain}%`;
+        if (m.courses?.length) out += ` | Courses: ${m.courses.slice(0, 8).join(", ")}`;
+        if (m.tags?.length) out += ` | Tags: ${m.tags.join(", ")}`;
+        (revsBy.get(pr.id) || []).slice(0, 3).forEach((r) => {
+            out += `\n  - Review${r.course ? ` (${r.course}${r.year ? `, ${r.year}` : ""})` : ""}: ${r.stars}/5 stars. ${String(r.text).slice(0, 500)}`;
+        });
+    });
+    return out;
+}
 
 export async function POST(req) {
     const data = await req.json()
-    const pc = new Pinecone({
-        apiKey: process.env.PINECONE_API_KEY,
-    })
+    const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY })
     const index = pc.index(process.env.PINECONE_INDEX || 'profspot-csuf').namespace(process.env.PINECONE_NAMESPACE || 'csuf')
     const openai = new OpenAI()
 
-    const text = data[data.length-1].content
+    const plan = await planQuery(openai, data)
     const embedding = await openai.embeddings.create({
         model: 'text-embedding-3-small',
-        input: text,
+        input: plan.searchText,
         encoding_format: 'float',
-
     })
+    const retrieved = await retrieve(index, embedding.data[0].embedding, plan)
 
-    const results = await index.query({
-        topK: 12,
-        includeMetadata: true,
-        vector: embedding.data[0].embedding
-
-    })
-
-    // Group matched reviews by professor so each recommendation is a distinct person
-    const byProfessor = new Map()
-    results.matches.forEach((match) => {
-        const { professor, subject, stars, review } = match.metadata
-        if (!byProfessor.has(professor)) byProfessor.set(professor, [])
-        byProfessor.get(professor).push({ subject, stars, review })
-    })
-
-    let resultString =
-    '\n\n Returned results from vector db (done automatically), grouped by professor: '
-    ;[...byProfessor.entries()].slice(0, 5).forEach(([professor, revs]) => {
-        resultString += `\n\nProfessor: ${professor}`
-        revs.slice(0, 3).forEach((r) => {
-            resultString += `\n- Subject: ${r.subject} | Stars: ${r.stars} | Review: ${r.review}`
-        })
-    })
-
-    const lastMessage = data[data.length-1]
-    const lastMessageContent = lastMessage.content + resultString
-    const lastDataWithoutLastMessage = data.slice(0, data.length-1)
+    const lastMessage = data[data.length - 1]
     const completion = await openai.chat.completions.create({
         messages: [
-            {role: 'system', content: systemPrompt},
-            ...lastDataWithoutLastMessage,
-            {role: 'user', content: lastMessageContent}
+            { role: 'system', content: systemPrompt },
+            ...data.slice(-9, -1),
+            { role: 'user', content: lastMessage.content + buildContext(plan, retrieved) },
         ],
         model: 'gpt-4o-mini',
         stream: true,
-
-
     })
 
     const stream = new ReadableStream({
         async start(controller) {
             const encoder = new TextEncoder()
-            try{
+            try {
                 for await (const chunk of completion) {
                     const content = chunk.choices[0]?.delta?.content
-                    if (content){
-                        const text= encoder.encode(content)
-                        controller.enqueue(text)
-                    }
+                    if (content) controller.enqueue(encoder.encode(content))
                 }
-            }
-            catch(err){
+            } catch (err) {
                 controller.error(err)
+                return
             }
-            finally{
-                controller.close()
-
-            }
-
+            controller.close()
         },
-
     })
 
     return new NextResponse(stream)

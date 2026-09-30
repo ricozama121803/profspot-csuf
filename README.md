@@ -23,9 +23,15 @@ Next.js, React, Material-UI, OpenAI (`text-embedding-3-small`, `gpt-4o-mini`), P
    PINECONE_INDEX=profspot-csuf
    PINECONE_NAMESPACE=csuf
    ```
-4. Load data: `node --env-file=.env.local scripts/load-pinecone.mjs` (creates the Pinecone index if needed and uploads `reviews.json`). `load.ipynb` does the same in Python.
+4. Get the data and load it into Pinecone (one time, ~20 min plus ~$0.20 of OpenAI embeddings):
+   ```
+   node scripts/scrape-csuf.mjs
+   node --env-file=.env.local scripts/load-pinecone.mjs
+   ```
 5. `npm run dev` and open http://localhost:3000.
 
-## Data
+## How it works
 
-`reviews.json` holds CSUF reviews for the ~300 most-reviewed professors, pulled from RateMyProfessors (school ID 166) with `node scripts/scrape-csuf.mjs [maxProfessors] [reviewsPerProfessor]`. Re-run it to refresh the data, then re-run the loader. Format: `professor`, `subject`, `stars`, `review`.
+- **Data:** `scripts/scrape-csuf.mjs` pulls every rated CSUF professor (~5,000) and all of their reviews (~120,000) from RateMyProfessors. It is resumable, so re-run it to continue after an interruption. Output goes to `data/` (git-ignored) and `app/departments.json`.
+- **Index:** `scripts/load-pinecone.mjs` stores one vector per professor profile (rating, difficulty, would-take-again, courses, tags) and one per review, each with filterable metadata (department, course, year, rating).
+- **Retrieval** (`app/api/chat/route.js`): a small LLM call turns the question into a search plan (department, course codes, "best"/"easiest" sorting, minimum rating). Pinecone then filters by that plan and ranks by semantic similarity, and the chat model answers using each professor's real stats plus their best-matching reviews.
