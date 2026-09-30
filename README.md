@@ -28,4 +28,4 @@ Next.js, React, Material-UI, OpenAI (`text-embedding-3-small`, `gpt-4o-mini`), P
 
 ## Data
 
-`reviews.json` currently holds **clearly labeled sample data** (fictional professors, prefixed `SAMPLE:`) so the app works out of the box. Replace it with real reviews in the same format (`professor`, `subject`, `stars`, `review`) before any real use. `app/scraping/scraping.js` is an optional Playwright scraper for RateMyProfessors pages; check the site's terms of service before using it.
+`reviews.json` holds CSUF reviews for the ~300 most-reviewed professors, pulled from RateMyProfessors (school ID 166) with `node scripts/scrape-csuf.mjs [maxProfessors] [reviewsPerProfessor]`. Re-run it to refresh the data, then re-run `load.ipynb`. Format: `professor`, `subject`, `stars`, `review`.
