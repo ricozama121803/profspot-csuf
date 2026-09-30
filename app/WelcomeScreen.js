@@ -1,143 +1,75 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Box, Typography, Button } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
-import * as THREE from 'three'; // Importing three.js
-import GLOBE from 'vanta/dist/vanta.globe.min'; // Importing the Vanta GLOBE effect
+import Logo from './Logo';
 
 export default function WelcomeScreen({ onFinish }) {
   const [fadeOut, setFadeOut] = useState(false);
-  const vantaRef = useRef(null); // Create a ref to attach the Vanta effect
-
-  useEffect(() => {
-    // Initialize the Vanta GLOBE effect
-    const vantaEffect = GLOBE({
-      el: vantaRef.current,
-      mouseControls: true,
-      touchControls: true,
-      gyroControls: false,
-      minHeight: 200.00,
-      minWidth: 200.00,
-      scale: 1.00,
-      scaleMobile: 1.00,
-      color: 0xFF7900,
-      color2: 0x003767,
-      size: 1.80,
-      backgroundColor: 0x003767, // CSUF blue
-      THREE // Pass the three.js instance
-    });
-
-    // Cleanup effect when the component unmounts
-    return () => {
-      if (vantaEffect) vantaEffect.destroy();
-    };
-  }, []);
 
   const handleClick = () => {
     setFadeOut(true);
-    setTimeout(() => {
-      onFinish(); // Call onFinish after the fade-out animation
-    }, 1500); // Duration of the fade-out animation
+    setTimeout(onFinish, 800); // wait for the fade-out animation
   };
 
   return (
     <motion.div
       initial={{ opacity: 1, scale: 1 }}
-      animate={{
-        opacity: fadeOut ? 0 : 1,
-        scale: fadeOut ? 0.9 : 1,
-        transition: { duration: 1.5 },
-      }}
+      animate={{ opacity: fadeOut ? 0 : 1, scale: fadeOut ? 0.95 : 1 }}
+      transition={{ duration: 0.8 }}
+      style={{ position: 'fixed', inset: 0, zIndex: 1000 }}
     >
       <Box
-        ref={vantaRef} // Attach the Vanta effect to this element
         sx={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
+          width: '100%',
+          height: '100%',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: '#003767',
-          color: '#fff',
-          zIndex: 1000, // Ensure the welcome screen is on top
+          background: 'linear-gradient(160deg, #eaf2fc, #d9e7f7)',
+          p: 2,
         }}
       >
         <Box
+          className="clay"
           sx={{
-            width: '400px', // Make the card narrower for a portrait orientation
-            height: '600px', // Make the card taller for a portrait orientation
-            padding: '40px 20px', // Adjust padding for more vertical space
-            background: 'rgba(255, 255, 255, 0.1)', // More transparent background
-            borderRadius: '15px', // Slightly more rounded corners for a softer look
-            backdropFilter: 'blur(15px)', // Increase blur for a glassier effect
-            WebkitBackdropFilter: 'blur(15px)', // Ensure compatibility with Webkit browsers
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.37)', // Stronger shadow for more depth
-            border: '1px solid rgba(255, 255, 255, 0.18)', // Softer border to enhance glass effect
-            textAlign: 'center', // Center align the text
+            width: '100%',
+            maxWidth: 420,
+            borderRadius: '40px',
+            p: { xs: 4, sm: 5 },
+            textAlign: 'center',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'space-between', // Space out the elements inside the card
             alignItems: 'center',
+            gap: 2.5,
           }}
         >
-          <Typography
-            variant="subtitle2" // Smaller font for "Introducing . . ."
-            sx={{
-              color: '#fff',
-              opacity: 0.8, // Slight transparency for subtext
-              fontWeight: '700', // Lighter font weight for subtext
-              marginBottom: '10px', // Space between this and the main title
-            }}
-          >
-            Introducing . . .
+          <motion.div initial={{ y: -16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.8 }}>
+            <Logo size={120} />
+          </motion.div>
+          <Typography sx={{ color: 'var(--clay-ink-soft)', fontWeight: 700, fontSize: '0.9rem', letterSpacing: 1 }}>
+            INTRODUCING
           </Typography>
-          <Typography
-            variant="h2"
-            component={motion.h3}
-            sx={{
-              background: '#ffffff',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              fontWeight: 'bold',
-              textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
-              marginBottom: '10px', // Space between the title and the subtext
-            }}
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.5, ease: 'easeOut' }}
-          >
-            ProfSpot CSUF
+          <Typography variant="h3" sx={{ color: 'var(--csuf-blue)', fontWeight: 800, lineHeight: 1.1 }}>
+            ProfSpot <span style={{ color: 'var(--csuf-orange)' }}>CSUF</span>
           </Typography>
-          <Typography
-            variant="subtitle1"
-            sx={{
-              color: '#fff',
-              opacity: 0.8, // Slight transparency for subtext
-              fontWeight: '300', // Lighter font weight for subtext
-              marginBottom: '20px', // Space between the text and the button
-            }}
-          >
+          <Typography sx={{ color: 'var(--clay-ink-soft)', fontSize: '1.05rem' }}>
             AI professor search for Cal State Fullerton Titans
           </Typography>
-          <Button
-            variant="contained"
-            color="primary"
+          <button
+            className="clay-btn"
             onClick={handleClick}
-            sx={{
-              padding: '10px 20px',
-              borderRadius: '8px',
-              backgroundColor: '#FF7900', // Match the color with the theme
-              '&:hover': {
-                backgroundColor: '#D96500', // Slightly darker shade on hover
-              },
-              fontSize: '16px',
-              fontWeight: 'bold',
+            style={{
+              marginTop: 12,
+              padding: '14px 36px',
+              borderRadius: 999,
+              background: 'var(--csuf-orange)',
+              color: '#fff',
+              fontSize: '1.05rem',
+              fontWeight: 700,
             }}
           >
             Chat now
-          </Button>
+          </button>
         </Box>
       </Box>
     </motion.div>

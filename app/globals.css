@@ -1,6 +1,123 @@
+:root {
+  --clay-bg: #e6eef8;
+  --clay-surface: #f1f6fc;
+  --clay-ink: #0f2a47;
+  --clay-ink-soft: #4d6583;
+  --csuf-blue: #003767;
+  --csuf-blue-light: #2f7fc8;
+  --csuf-orange: #ff7900;
+  --shadow-dark: rgba(0, 55, 103, 0.3);
+  --shadow-dark-soft: rgba(0, 55, 103, 0.06);
+  --shadow-light: rgba(255, 255, 255, 0.95);
+}
 
 * {
   box-sizing: border-box;
   padding: 0;
   margin: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  color: var(--clay-ink);
+  background: linear-gradient(160deg, #eaf2fc, #d9e7f7);
+  overscroll-behavior: none;
+}
+
+/* Claymorphic "puffed" surface: light from top-left, soft shadow bottom-right,
+   faint inner highlight/shade for a molded look. */
+.clay {
+  background: var(--clay-surface);
+  box-shadow:
+    9px 9px 18px -8px var(--shadow-dark),
+    -7px -7px 16px -10px var(--shadow-light),
+    inset 1px 1px 1px rgba(255, 255, 255, 0.6),
+    inset -2px -2px 6px var(--shadow-dark-soft);
+}
+
+/* "Pressed in" surface for text inputs. */
+.clay-inset {
+  background: var(--clay-bg);
+  box-shadow:
+    inset 4px 4px 10px rgba(0, 55, 103, 0.16),
+    inset -4px -4px 10px rgba(255, 255, 255, 0.75);
+}
+
+.clay-btn {
+  cursor: pointer;
+  border: none;
+  box-shadow:
+    6px 6px 14px -6px rgba(0, 55, 103, 0.4),
+    -5px -5px 12px -8px var(--shadow-light),
+    inset 2px 2px 3px rgba(255, 255, 255, 0.45),
+    inset -2px -2px 6px rgba(0, 0, 0, 0.12);
+  transition: box-shadow 0.12s ease, transform 0.12s ease;
+}
+
+.clay-btn:hover {
+  transform: translateY(-1px);
+}
+
+.clay-btn:active {
+  transform: translateY(1px);
+  box-shadow:
+    inset 3px 3px 8px rgba(0, 0, 0, 0.22),
+    inset -3px -3px 8px rgba(255, 255, 255, 0.35);
+}
+
+.clay-btn:focus-visible,
+.clay-inset:focus-within {
+  outline: 3px solid rgba(255, 121, 0, 0.45);
+  outline-offset: 2px;
+}
+
+.clay-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--clay-ink);
+  font: inherit;
+  font-size: 1rem;
+  padding: 14px 20px;
+  border-radius: 999px;
+  outline: none;
+}
+
+.clay-input::placeholder {
+  color: var(--clay-ink-soft);
+  opacity: 0.8;
+}
+
+.clay-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.clay-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 55, 103, 0.25);
+  border-radius: 999px;
+}
+
+.md p + p,
+.md ul,
+.md ol {
+  margin-top: 8px;
+}
+
+.md ul,
+.md ol {
+  padding-left: 1.25rem;
+}
+
+.md li + li {
+  margin-top: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clay-btn {
+    transition: none;
+  }
 }
