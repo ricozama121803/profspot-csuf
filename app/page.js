@@ -54,6 +54,14 @@ export default function Home() {
       body: JSON.stringify([...messages, { role: 'user', content: message }]),
     });
 
+    if (!response.ok) {
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        { role: 'assistant', content: "Sorry, something went wrong on my end. Please try again in a moment." },
+      ]);
+      return;
+    }
+
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
 
