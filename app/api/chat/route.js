@@ -157,6 +157,12 @@ function buildContext(plan, { profiles, reviews }) {
     return out;
 }
 
+// Give Vercel's serverless function enough time for embed + plan + streamed answer
+export const maxDuration = 30
+
+const MAX_MESSAGE_CHARS = 1000
+const MAX_MESSAGES = 30
+
 const isOutage = (err) =>
     [429, 401, 402, 529].includes(err?.status) ||
     err?.code === 'insufficient_quota' ||
@@ -175,6 +181,12 @@ export async function POST(req) {
 
 async function handleChat(req) {
     const data = await req.json()
+    // basic abuse guard: every request costs money, so reject oversized or malformed input
+    if (!Array.isArray(data) || !data.length || data.length > MAX_MESSAGES ||
+        data.some((m) => typeof m?.content !== 'string' || m.content.length > MAX_MESSAGE_CHARS * 8) ||
+        data[data.length - 1].content.length > MAX_MESSAGE_CHARS) {
+        return NextResponse.json({ error: 'invalid' }, { status: 400 })
+    }
     const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY })
     const index = pc.index(process.env.PINECONE_INDEX || 'profspot-csuf').namespace(process.env.PINECONE_NAMESPACE || 'csuf')
     const openai = new OpenAI()
