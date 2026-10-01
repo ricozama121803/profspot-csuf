@@ -135,3 +135,11 @@ body {
 .md ul + p {
   margin-top: 12px;
 }
+
+.footer-link {
+  transition: color 0.15s ease;
+}
+
+.footer-link:hover {
+  color: var(--csuf-orange);
+}
