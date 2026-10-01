@@ -55,7 +55,7 @@ export default function PinnedPanel({ open, onClose }) {
         <Box className="clay-scroll" sx={{ flexGrow: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2, p: 0.5, pr: 1 }}>
           {pinned.length === 0 && (
             <Typography sx={{ color: 'var(--clay-ink-soft)', textAlign: 'center', mt: 6, px: 2, lineHeight: 1.6 }}>
-              Nothing saved yet. Tap the 📌 next to a professor's name in the chat to keep them here while you plan your classes.
+              Nothing saved yet. Tap the 📌 next to a professor&apos;s name in the chat to keep them here while you plan your classes.
               Your list stays in this browser only.
             </Typography>
           )}
