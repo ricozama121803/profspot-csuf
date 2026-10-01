@@ -259,7 +259,7 @@ export default function Home() {
             color: 'var(--clay-ink-soft)', fontSize: '0.8rem', textAlign: 'center',
           }}
         >
-          <span>Built by Enrico Zamarripa. Let me know your feedback around here!</span>
+          <span>Let me know your feedback around here!</span>
           <Box sx={{ display: 'flex', gap: 1.25 }}>
             {[
               { href: 'https://enrico-zamarripa-portfolio-site.vercel.app/', label: 'Portfolio', Icon: Language },
