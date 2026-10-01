@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Stack, Typography } from '@mui/material';
-import { ArrowUpward, Star, LocalFireDepartment, ThumbUp, School, MenuBook, Notes } from '@mui/icons-material';
+import { ArrowUpward, Star, LocalFireDepartment, ThumbUp, School, MenuBook, Notes, Build } from '@mui/icons-material';
 import ReactMarkdown from 'react-markdown';
 import { motion } from 'framer-motion';
 import WelcomeScreen from './WelcomeScreen';
@@ -98,20 +98,35 @@ export default function Home() {
 
     setMessage('');
 
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify([...messages, { role: 'user', content: message }]),
-    });
-
-    if (!response.ok) {
+    const fail = (kind) =>
       setMessages((prev) => [
         ...prev.slice(0, -1),
-        { role: 'assistant', content: "Sorry, something went wrong on my end. Please try again in a moment." },
+        {
+          role: 'assistant',
+          kind,
+          content:
+            kind === 'maintenance'
+              ? "ProfSpot is currently under maintenance. We'll be back soon, please check back later!"
+              : 'Sorry, something went wrong on my end. Please try again in a moment.',
+        },
       ]);
-      return;
+
+    let response;
+    try {
+      response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify([...messages, { role: 'user', content: message }]),
+      });
+    } catch {
+      return fail('error');
+    }
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      return fail(body.error === 'maintenance' ? 'maintenance' : 'error');
     }
 
     const reader = response.body.getReader();
@@ -218,9 +233,25 @@ export default function Home() {
                         cursor: 'default',
                       }}
                     >
-                      <div className="md">
-                        <ReactMarkdown components={{ li: StatItem }}>{m.content || '…'}</ReactMarkdown>
-                      </div>
+                      {m.kind === 'maintenance' ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <span
+                            className="clay-inset"
+                            style={{ width: 36, height: 36, borderRadius: '50%', display: 'grid', placeItems: 'center', flexShrink: 0, color: 'var(--csuf-orange)' }}
+                          >
+                            <Build style={{ fontSize: 20 }} />
+                          </span>
+                          <span>
+                            <strong style={{ color: 'var(--csuf-blue)' }}>Under maintenance</strong>
+                            <br />
+                            {m.content}
+                          </span>
+                        </Box>
+                      ) : (
+                        <div className="md">
+                          <ReactMarkdown components={{ li: StatItem }}>{m.content || '…'}</ReactMarkdown>
+                        </div>
+                      )}
                     </Box>
                   </Box>
                 );

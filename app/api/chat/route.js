@@ -144,7 +144,20 @@ function buildContext(plan, { profiles, reviews }) {
     return out;
 }
 
+const isOutage = (err) =>
+    err?.status === 429 || err?.status === 401 || err?.code === 'insufficient_quota' || err?.code === 'credit_balance_exhausted'
+
 export async function POST(req) {
+    try {
+        return await handleChat(req)
+    } catch (err) {
+        console.error('chat failed', err)
+        // quota/billing/auth problems are on our side: tell the UI the app is down for maintenance
+        return NextResponse.json({ error: isOutage(err) ? 'maintenance' : 'error' }, { status: isOutage(err) ? 503 : 500 })
+    }
+}
+
+async function handleChat(req) {
     const data = await req.json()
     const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY })
     const index = pc.index(process.env.PINECONE_INDEX || 'profspot-csuf').namespace(process.env.PINECONE_NAMESPACE || 'csuf')
