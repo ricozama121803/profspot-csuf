@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { Pinecone } from "@pinecone-database/pinecone";
 import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import departments from "../../departments.json";
 
 const systemPrompt = `You are ProfSpot CSUF, a conversational AI agent that helps California State University, Fullerton (CSUF) students find and evaluate professors. Your data comes from RateMyProfessors: each professor has overall stats (rating out of 5, difficulty out of 5, would-take-again percentage, number of ratings, courses, tags) plus student reviews.
@@ -29,19 +30,31 @@ Return JSON with exactly these keys:
 
 Allowed departments: ${JSON.stringify(departments)}`;
 
+// Claude does the query planning and the answer; OpenAI is only used for embeddings (Anthropic has no embeddings API).
+const CLAUDE_MODEL = process.env.ANTHROPIC_MODEL || "claude-haiku-4-5-20251001"; // cheapest current Claude model
+
+// Anthropic requires a non-empty conversation that starts with a user turn
+const toClaudeMessages = (msgs) => {
+    const cleaned = msgs.filter((m) => m.content && m.content.trim())
+    while (cleaned.length && cleaned[0].role !== "user") cleaned.shift()
+    return cleaned.map((m) => ({ role: m.role, content: m.content }))
+}
+
 const normCourse = (c) => String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
 const fmt = (n, d = 1) => (typeof n === "number" ? n.toFixed(d) : "n/a");
 
-async function planQuery(openai, messages) {
+async function planQuery(claude, messages) {
     const fallback = { searchText: messages[messages.length - 1].content, departments: [], courses: [], sort: "relevance", minRating: null };
     try {
-        const res = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            response_format: { type: "json_object" },
+        const res = await claude.messages.create({
+            model: CLAUDE_MODEL,
+            max_tokens: 400,
             temperature: 0,
-            messages: [{ role: "system", content: PLAN_PROMPT }, ...messages.slice(-6)],
+            system: PLAN_PROMPT + "\nRespond with the JSON object only, no other text.",
+            messages: toClaudeMessages(messages.slice(-6)),
         });
-        const plan = JSON.parse(res.choices[0].message.content);
+        const raw = res.content.map((b) => b.text || "").join("");
+        const plan = JSON.parse(raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1));
         const valid = new Set(departments);
         return {
             searchText: String(plan.searchText || fallback.searchText),
@@ -145,7 +158,10 @@ function buildContext(plan, { profiles, reviews }) {
 }
 
 const isOutage = (err) =>
-    err?.status === 429 || err?.status === 401 || err?.code === 'insufficient_quota' || err?.code === 'credit_balance_exhausted'
+    [429, 401, 402, 529].includes(err?.status) ||
+    err?.code === 'insufficient_quota' ||
+    err?.code === 'credit_balance_exhausted' ||
+    /credit balance|billing/i.test(err?.message || '')
 
 export async function POST(req) {
     try {
@@ -162,8 +178,9 @@ async function handleChat(req) {
     const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY })
     const index = pc.index(process.env.PINECONE_INDEX || 'profspot-csuf').namespace(process.env.PINECONE_NAMESPACE || 'csuf')
     const openai = new OpenAI()
+    const claude = new Anthropic()
 
-    const plan = await planQuery(openai, data)
+    const plan = await planQuery(claude, data)
     const embedding = await openai.embeddings.create({
         model: 'text-embedding-3-small',
         input: plan.searchText,
@@ -172,23 +189,24 @@ async function handleChat(req) {
     const retrieved = await retrieve(index, embedding.data[0].embedding, plan)
 
     const lastMessage = data[data.length - 1]
-    const completion = await openai.chat.completions.create({
-        messages: [
-            { role: 'system', content: systemPrompt },
+    const completion = claude.messages.stream({
+        model: CLAUDE_MODEL,
+        max_tokens: 1500,
+        system: systemPrompt,
+        messages: toClaudeMessages([
             ...data.slice(-9, -1),
             { role: 'user', content: lastMessage.content + buildContext(plan, retrieved) },
-        ],
-        model: 'gpt-4o-mini',
-        stream: true,
+        ]),
     })
 
     const stream = new ReadableStream({
         async start(controller) {
             const encoder = new TextEncoder()
             try {
-                for await (const chunk of completion) {
-                    const content = chunk.choices[0]?.delta?.content
-                    if (content) controller.enqueue(encoder.encode(content))
+                for await (const event of completion) {
+                    if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+                        controller.enqueue(encoder.encode(event.delta.text))
+                    }
                 }
             } catch (err) {
                 controller.error(err)

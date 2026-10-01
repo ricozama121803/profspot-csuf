@@ -17,9 +17,11 @@ Next.js, React, Material-UI, OpenAI (`text-embedding-3-small`, `gpt-4o-mini`), P
 2. `npm install`
 3. Create `.env.local`:
    ```
-   OPENAI_API_KEY=...
+   OPENAI_API_KEY=...      # embeddings only
+   ANTHROPIC_API_KEY=...   # query planning + answers (Claude Haiku 4.5)
    PINECONE_API_KEY=...
    # optional, defaults shown
+   ANTHROPIC_MODEL=claude-haiku-4-5-20251001
    PINECONE_INDEX=profspot-csuf
    PINECONE_NAMESPACE=csuf
    ```
