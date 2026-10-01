@@ -216,5 +216,17 @@ async function handleChat(req) {
         },
     })
 
-    return new NextResponse(stream)
+    // structured data for the UI (RateMyProfessors links + thumbtack/save), so it never depends on the model's text
+    const professors = retrieved.profiles.map((p) => ({
+        id: p.id,
+        legacyId: p.id.replace('prof-', ''),
+        name: p.metadata.professor,
+        department: p.metadata.department,
+        avgRating: p.metadata.avgRating,
+        avgDifficulty: p.metadata.avgDifficulty,
+        wouldTakeAgain: p.metadata.wouldTakeAgain ?? null,
+        numRatings: p.metadata.numRatings,
+        courses: (p.metadata.courses || []).slice(0, 10),
+    }))
+    return new NextResponse(stream, { headers: { 'X-Professors': encodeURIComponent(JSON.stringify(professors)) } })
 }

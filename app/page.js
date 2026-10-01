@@ -1,64 +1,15 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Stack, Typography } from '@mui/material';
-import { ArrowUpward, Star, LocalFireDepartment, ThumbUp, School, MenuBook, Notes, Build } from '@mui/icons-material';
-import ReactMarkdown from 'react-markdown';
+import { ArrowUpward, Build, PushPin } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import WelcomeScreen from './WelcomeScreen';
 import Logo from './Logo';
+import ChatMarkdown from './ChatMarkdown';
+import PinnedPanel from './PinnedPanel';
+import { usePinned } from './pinned';
 
 
-
-// Turns "- **Overall Rating:** 4.4/5 (44 ratings)" list items into icon rows with color-coded values.
-const textOf = (node) =>
-  typeof node === 'string' || typeof node === 'number'
-    ? String(node)
-    : Array.isArray(node)
-      ? node.map(textOf).join('')
-      : node?.props?.children !== undefined
-        ? textOf(node.props.children)
-        : '';
-
-const GOOD = '#1e9e5a', OK = '#e0a000', BAD = '#d9452f';
-// higher is better unless `invert` (difficulty)
-const tone = (value, min, max, invert) => {
-  const r = (invert ? max - value : value - min) / (max - min);
-  return r >= 0.7 ? GOOD : r >= 0.5 ? OK : BAD;
-};
-
-const STATS = [
-  { re: /^overall( rating)?/i, label: 'Overall Rating', Icon: Star, color: (t) => tone(parseFloat(t), 1, 5) },
-  { re: /^difficulty/i, label: 'Difficulty', Icon: LocalFireDepartment, color: (t) => tone(parseFloat(t), 1, 5, true) },
-  { re: /^would take again/i, label: 'Would Take Again', Icon: ThumbUp, color: (t) => tone(parseFloat(t), 0, 100) },
-  { re: /^department/i, label: 'Department', Icon: School, color: () => 'var(--csuf-blue)' },
-  { re: /^courses?/i, label: 'Courses', Icon: MenuBook, color: () => 'var(--csuf-blue)' },
-  { re: /^summary/i, label: 'Summary', Icon: Notes, color: () => 'var(--csuf-blue)' },
-];
-
-function StatItem({ children, node, ...rest }) {
-  const match = textOf(children).trim().match(/^([A-Za-z ]+?)\s*:\s*([\s\S]*)$/);
-  const stat = match && STATS.find((s) => s.re.test(match[1].trim()));
-  if (!stat) return <li {...rest}>{children}</li>;
-  const { Icon, label } = stat;
-  const value = match[2].trim();
-  const color = stat.color(value);
-  const numeric = ['Overall Rating', 'Difficulty', 'Would Take Again'].includes(label);
-  return (
-    <li style={{ listStyle: 'none', margin: '6px 0 0 -1.25rem', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-      <span
-        className="clay-inset"
-        style={{ width: 30, height: 30, borderRadius: '50%', display: 'grid', placeItems: 'center', flexShrink: 0, color }}
-        title={label}
-      >
-        <Icon style={{ fontSize: 18 }} />
-      </span>
-      <span style={{ paddingTop: 4 }}>
-        <span style={{ color: 'var(--clay-ink-soft)', fontSize: '0.8rem', fontWeight: 700, marginRight: 6 }}>{label}</span>
-        <span style={numeric ? { fontWeight: 800, color } : undefined}>{value}</span>
-      </span>
-    </li>
-  );
-}
 
 export default function Home() {
   const [showWelcome, setShowWelcome] = useState(true);
@@ -73,6 +24,8 @@ export default function Home() {
 
   const [message, setMessage] = useState('');
   const endRef = useRef(null);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const { pinned } = usePinned();
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -118,7 +71,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify([...messages, { role: 'user', content: message }]),
+        body: JSON.stringify([...messages, { role: 'user', content: message }].map(({ role, content }) => ({ role, content }))),
       });
     } catch {
       return fail('error');
@@ -128,6 +81,12 @@ export default function Home() {
       const body = await response.json().catch(() => ({}));
       return fail(body.error === 'maintenance' ? 'maintenance' : 'error');
     }
+
+    let professors = [];
+    try {
+      professors = JSON.parse(decodeURIComponent(response.headers.get('X-Professors') || '[]'));
+    } catch {}
+    setMessages((prev) => [...prev.slice(0, -1), { ...prev[prev.length - 1], professors }]);
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
@@ -155,6 +114,7 @@ export default function Home() {
 
   return (
     <Box>
+      <PinnedPanel open={panelOpen} onClose={() => setPanelOpen(false)} />
       {showWelcome && <WelcomeScreen onFinish={() => setShowWelcome(false)} />}
       <Box
         sx={{
@@ -186,6 +146,24 @@ export default function Home() {
             ProfSpot <span style={{ color: 'var(--csuf-orange)' }}>CSUF</span>
           </Typography>
           <Box sx={{ flexGrow: 1 }} />
+          <button
+            className="clay-btn"
+            onClick={() => setPanelOpen(true)}
+            aria-label={`Saved professors (${pinned.length})`}
+            title="Saved professors"
+            style={{
+              position: 'relative', width: 40, height: 40, borderRadius: '50%', display: 'grid', placeItems: 'center',
+              color: 'var(--csuf-blue)', background: 'var(--clay-surface)',
+            }}
+          >
+            <PushPin />
+            {pinned.length > 0 && (
+              <span style={{
+                position: 'absolute', top: -4, right: -4, minWidth: 20, height: 20, borderRadius: 10, padding: '0 5px',
+                background: 'var(--csuf-orange)', color: '#fff', fontSize: 12, fontWeight: 800, display: 'grid', placeItems: 'center',
+              }}>{pinned.length}</span>
+            )}
+          </button>
           <a
             href="https://github.com/ricozama121803/profspot-csuf"
             target="_blank"
@@ -249,7 +227,7 @@ export default function Home() {
                         </Box>
                       ) : (
                         <div className="md">
-                          <ReactMarkdown components={{ li: StatItem }}>{m.content || '…'}</ReactMarkdown>
+                          <ChatMarkdown content={m.content} professors={m.professors} />
                         </div>
                       )}
                     </Box>

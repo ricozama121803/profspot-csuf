@@ -34,6 +34,8 @@ Next.js, React, Material-UI, OpenAI (`text-embedding-3-small`, `gpt-4o-mini`), P
 
 ## How it works
 
+- **Saved professors:** each professor in an answer has a 📌 button and a link to their RateMyProfessors page. Saved professors (with optional notes) are stored in the browser's `localStorage` only, with no login, and can be exported as a PDF with clickable RMP links.
+
 - **Data:** `scripts/scrape-csuf.mjs` pulls every rated CSUF professor (~5,000) and all of their reviews (~120,000) from RateMyProfessors. It is resumable, so re-run it to continue after an interruption. Output goes to `data/` (git-ignored) and `app/departments.json`.
 - **Index:** `scripts/load-pinecone.mjs` stores one vector per professor profile (rating, difficulty, would-take-again, courses, tags) and one per review, each with filterable metadata (department, course, year, rating).
 - **Retrieval** (`app/api/chat/route.js`): a small LLM call turns the question into a search plan (department, course codes, "best"/"easiest" sorting, minimum rating). Pinecone then filters by that plan and ranks by semantic similarity, and the chat model answers using each professor's real stats plus their best-matching reviews.
