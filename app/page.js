@@ -18,7 +18,7 @@ export default function Home() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: "Hi! I'm the ProfSpot assistant for Cal State Fullerton. Ask me about CSUF professors, courses, or teaching styles!",
+      content: "Hi! I'm the ProfSpot assistant for Cal State Fullerton. Ask me about CSUF professors, courses, or teaching styles! I search 120,000+ student reviews scraped from RateMyProfessors.com.",
     },
   ]);
 
