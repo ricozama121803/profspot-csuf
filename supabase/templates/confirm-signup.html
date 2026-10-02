@@ -1,0 +1,30 @@
+<!-- Paste into Supabase Dashboard > Authentication > Email Templates > "Confirm signup".
+     Suggested subject: Confirm your ProfSpot CSUF account
+     Uses table layout + inline styles because email clients ignore most modern CSS. -->
+<div style="margin:0;padding:32px 16px;background:#e6eef8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table role="presentation" align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;margin:0 auto;">
+    <tr>
+      <td style="background:#ffffff;border-radius:24px;padding:40px 32px;text-align:center;box-shadow:0 8px 24px -12px rgba(0,55,103,0.35);">
+        <img src="{{ .SiteURL }}/logo.png" alt="ProfSpot CSUF" width="72" height="72" style="display:block;margin:0 auto 20px;border:0;" />
+        <h1 style="margin:0 0 8px;font-size:24px;line-height:1.3;color:#003767;">Welcome to ProfSpot CSUF</h1>
+        <p style="margin:0 0 28px;font-size:16px;line-height:1.6;color:#4d6583;">
+          One quick step: confirm your email so you can save professors and keep them across devices.
+        </p>
+        <a href="{{ .ConfirmationURL }}"
+           style="display:inline-block;background:#ff7900;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:999px;">
+          Confirm my email
+        </a>
+        <p style="margin:28px 0 0;font-size:13px;line-height:1.6;color:#7a8ca5;">
+          Button not working? Copy and paste this link into your browser:<br />
+          <a href="{{ .ConfirmationURL }}" style="color:#2f7fc8;word-break:break-all;">{{ .ConfirmationURL }}</a>
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:20px 16px 0;text-align:center;font-size:12px;line-height:1.6;color:#7a8ca5;">
+        Didn't sign up? You can safely ignore this email.<br />
+        ProfSpot CSUF is a student project, not affiliated with Cal State Fullerton.
+      </td>
+    </tr>
+  </table>
+</div>
