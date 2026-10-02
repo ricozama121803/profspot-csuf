@@ -20,6 +20,9 @@ Next.js, React, Material-UI, OpenAI (`text-embedding-3-small`, `gpt-4o-mini`), P
    OPENAI_API_KEY=...      # embeddings only
    ANTHROPIC_API_KEY=...   # query planning + answers (Claude Haiku 4.5)
    PINECONE_API_KEY=...
+   NEXT_PUBLIC_SUPABASE_URL=...        # Supabase project URL
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=...   # Supabase anon (public) key
+   CRON_SECRET=...                     # any long random string; also set it in Vercel
    # optional, defaults shown
    ANTHROPIC_MODEL=claude-haiku-4-5-20251001
    PINECONE_INDEX=profspot-csuf
@@ -31,6 +34,10 @@ Next.js, React, Material-UI, OpenAI (`text-embedding-3-small`, `gpt-4o-mini`), P
    node --env-file=.env.local scripts/load-pinecone.mjs
    ```
 5. `npm run dev` and open http://localhost:3000.
+
+## Supabase keep-alive
+
+Free-tier Supabase projects pause after ~7 days of inactivity. `vercel.json` schedules `GET /api/keepalive` every 3 days; it runs a real query against a tiny `keepalive` table. One-time setup: run `supabase/keepalive.sql` in the Supabase SQL editor, then set the three env vars above in Vercel (Vercel sends `CRON_SECRET` as a bearer token automatically).
 
 ## How it works
 
