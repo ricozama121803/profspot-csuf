@@ -56,5 +56,30 @@ export async function exportPinnedPdf(pinned) {
     y += 26;
   });
 
-  doc.save('profspot-csuf-saved-professors.pdf');
+  await deliverPdf(doc.output('blob'), 'profspot-csuf-saved-professors.pdf');
+}
+
+// doc.save() is unreliable on mobile browsers (iOS Safari, in-app webviews), so hand the file
+// to the native share sheet when available and fall back to a blob-URL download link.
+async function deliverPdf(blob, filename) {
+  const file = new File([blob], filename, { type: 'application/pdf' });
+  const isTouch = typeof navigator !== 'undefined' && (navigator.maxTouchPoints || 0) > 1;
+  if (isTouch && navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: 'ProfSpot CSUF - Saved Professors' });
+      return;
+    } catch (err) {
+      if (err?.name === 'AbortError') return; // user closed the share sheet
+      // otherwise (e.g. gesture expired) fall through to a normal download
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
 }

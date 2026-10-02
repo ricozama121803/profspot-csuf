@@ -24,6 +24,9 @@ export default function PinnedPanel({ open, onClose }) {
     setExporting(true);
     try {
       await exportPinnedPdf(pinned);
+    } catch (err) {
+      console.error('PDF export failed', err);
+      window.alert('Sorry, the PDF could not be created. Please try again.');
     } finally {
       setExporting(false);
     }
